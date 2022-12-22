@@ -1,9 +1,13 @@
-import db from "./db.js";
-import express from "express";
+"use strict";
+const fs = require("fs");
+const express = require("express");
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-const counter = db.data.counter || {};
+let dbFile = "db.json";
+let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
+let saved = { ...counter };
 
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
@@ -18,7 +22,7 @@ app.get("/", async (req, res) => {
       `Realtime data:<br/><pre>` +
       JSON.stringify(counter, null, 4) +
       "</pre><br/><br/>Saved data: (saved after each 60s)<br/><pre>" +
-      JSON.stringify(db.data.counter, null, 4) +
+      JSON.stringify(saved, null, 4) +
       "</pre>"
   );
 });
@@ -36,12 +40,19 @@ app.post("/count", (req, res) => {
   }
 });
 
+app.post("/clear", (req, res) => {
+  console.log("Recevied: " + JSON.stringify(req.body));
+  counter = {};
+  res.send("Cleared");
+});
+
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Useful script statistic app listening on port ${port}`);
 
   setInterval(async () => {
-    db.data.counter = counter;
-    await db.write();
+    fs.writeFileSync(dbFile, JSON.stringify(counter));
+    saved = { ...counter };
+    console.log("Saved " + JSON.stringify(counter));
   }, 1000 * 60);
 });
 
