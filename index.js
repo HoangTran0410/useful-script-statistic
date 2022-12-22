@@ -42,7 +42,6 @@ app.listen(port, () => {
   setInterval(async () => {
     db.data.counter = counter;
     await db.write();
-    console.log("Written counter to db.");
   }, 1000 * 60);
 });
 
