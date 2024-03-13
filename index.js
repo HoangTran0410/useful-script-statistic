@@ -9,6 +9,12 @@ let dbFile = "db.json";
 let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
 let saved = { ...counter };
 
+function saveDb() {
+  fs.writeFileSync(dbFile, JSON.stringify(counter));
+  saved = { ...counter };
+  console.log("Saved " + JSON.stringify(counter));
+}
+
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
@@ -34,6 +40,7 @@ app.post("/count", (req, res) => {
     let newVal = (counter[script] || 0) + 1;
     counter[script] = newVal;
     console.log("Increased " + script + ": " + newVal);
+    saveDb();
     res.send(script + ":" + newVal);
   } else {
     res.send("Not valid body");
@@ -43,17 +50,13 @@ app.post("/count", (req, res) => {
 app.post("/clear", (req, res) => {
   console.log("Recevied: " + JSON.stringify(req.body));
   counter = {};
+  saveDb();
   res.send("Cleared");
 });
 
 app.listen(port, () => {
   console.log(`Useful script statistic app listening on port ${port}`);
-
-  setInterval(async () => {
-    fs.writeFileSync(dbFile, JSON.stringify(counter));
-    saved = { ...counter };
-    console.log("Saved " + JSON.stringify(counter));
-  }, 1000 * 60);
+  // setInterval(saveDb, 1000 * 60);
 });
 
 /* Update data:
