@@ -25,10 +25,8 @@ app.get("/", async (req, res) => {
       `Từ đó sẽ tập trung <b>cập nhật/nâng cấp</b> các chức năng đó<br/>` +
       `Extension mình đã dành rất nhiều thời gian để làm và chia sẻ <b>miễn phí</b> cho cộng đồng sử dụng<br/>` +
       `Nên mong các anh/chị nhân tài đừng hack hay spam server này tội em lắm ạ :( <br/></br>` +
-      `Realtime data:<br/><pre>` +
+      `Data:<br/><pre>` +
       JSON.stringify(counter, null, 4) +
-      "</pre><br/><br/>Saved data: (saved after each 60s)<br/><pre>" +
-      JSON.stringify(saved, null, 4) +
       "</pre>"
   );
 });
