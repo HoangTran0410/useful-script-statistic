@@ -31,6 +31,10 @@ app.get("/", async (req, res) => {
   );
 });
 
+app.get("/json", async (req, res) => {
+  res.send(counter);
+});
+
 app.post("/count", (req, res) => {
   console.log("Recevied: " + JSON.stringify(req.body));
   if (req.body?.script) {
