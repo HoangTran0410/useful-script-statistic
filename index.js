@@ -12,6 +12,7 @@ let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
 
 function writeLog(text) {
   fs.appendFileSync(logFile, text + "\n");
+  console.log(text);
 }
 
 function saveDb() {
