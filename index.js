@@ -57,7 +57,7 @@ app.get("/json", async (req, res) => {
 });
 
 app.get("/log", async (req, res) => {
-  res.send(fs.readFileSync(logFile).toString());
+  res.send(fs.readFileSync(logFile).toString().split("\n").join("<br/>"));
 });
 
 app.post("/count", (req, res) => {
