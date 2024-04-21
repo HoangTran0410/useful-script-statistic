@@ -39,6 +39,9 @@ function sort(data) {
   return sortObjectByKey(sortedData);
 }
 
+const now = () =>
+  new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
@@ -57,7 +60,14 @@ app.get("/json", async (req, res) => {
 });
 
 app.get("/log", async (req, res) => {
-  res.send(fs.readFileSync(logFile).toString().split("\n").join("<br/>"));
+  res.send(
+    fs.readFileSync(logFile).toString().split("\n").reverse().join("<br/>")
+  );
+});
+
+app.get("/clear-log", async (req, res) => {
+  fs.writeFileSync(logFile, "");
+  res.send("Cleared");
 });
 
 app.post("/count", (req, res) => {
@@ -72,7 +82,7 @@ app.post("/count", (req, res) => {
     }
     let newVal = counter[version][script] + 1;
     counter[version][script] = newVal;
-    let log = `${new Date().toLocaleString()}: ${script} (${version}) -> ${newVal}`;
+    let log = `${now()}: ${script} (${version}) -> ${newVal}`;
     writeLog(log);
     res.send(log);
     saveDb();
