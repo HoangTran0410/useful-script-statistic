@@ -5,14 +5,37 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 
-let dbFile = "db.json";
+const dbFile = "db.json";
+const logFile = "log.txt";
+
 let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
-let saved = { ...counter };
+
+function writeLog(text) {
+  fs.appendFileSync(logFile, text + "\n");
+}
 
 function saveDb() {
   fs.writeFileSync(dbFile, JSON.stringify(counter));
-  saved = { ...counter };
-  console.log("Saved " + JSON.stringify(counter));
+}
+
+function sortObjectByValue(obj) {
+  const sortable = Object.entries(obj);
+  sortable.sort((a, b) => b[1] - a[1]);
+  return Object.fromEntries(sortable);
+}
+
+function sortObjectByKey(obj) {
+  const sortable = Object.entries(obj);
+  sortable.sort((a, b) => b[0].localeCompare(a[0]));
+  return Object.fromEntries(sortable);
+}
+
+function sort(data) {
+  const sortedData = {};
+  for (const key in data) {
+    sortedData[key] = sortObjectByValue(data[key]);
+  }
+  return sortObjectByKey(sortedData);
 }
 
 app.use(express.json()); // for parsing application/json
@@ -24,37 +47,45 @@ app.get("/", async (req, res) => {
       `Phục vụ cho quá trình <b>thống kê</b> xem chức năng nào được <b>dùng nhiều</b><br/>` +
       `Từ đó sẽ tập trung <b>cập nhật/nâng cấp</b> các chức năng đó<br/>` +
       `Extension mình đã dành rất nhiều thời gian để làm và chia sẻ <b>miễn phí</b> cho cộng đồng sử dụng<br/>` +
-      `Nên mong các anh/chị nhân tài đừng hack hay spam server này tội em lắm ạ :( <br/></br>` +
-      `Data:<br/><pre>` +
-      JSON.stringify(counter, null, 4) +
-      "</pre>"
+      `Nên mong các anh/chị nhân tài đừng hack hay spam server này tội em lắm ạ :(`
   );
 });
 
 app.get("/json", async (req, res) => {
-  res.send(counter);
+  res.send(sort(counter));
+});
+
+app.get("/log", async (req, res) => {
+  res.send(fs.readFileSync(logFile).toString());
 });
 
 app.post("/count", (req, res) => {
   console.log("Recevied: " + JSON.stringify(req.body));
-  if (req.body?.script) {
-    let script = req.body.script;
-    let newVal = (counter[script] || 0) + 1;
-    counter[script] = newVal;
-    console.log("Increased " + script + ": " + newVal);
+  const { script, version = "old" } = req.body || {};
+  if (script) {
+    if (!counter[version]) {
+      counter[version] = {};
+    }
+    if (!counter[version][script]) {
+      counter[version][script] = 0;
+    }
+    let newVal = counter[version][script] + 1;
+    counter[version][script] = newVal;
+    let log = `${new Date().toLocaleString()}: ${script} (${version}) -> ${newVal}`;
+    writeLog(log);
+    res.send(log);
     saveDb();
-    res.send(script + ":" + newVal);
   } else {
     res.send("Not valid body");
   }
 });
 
-app.post("/clear", (req, res) => {
-  console.log("Recevied: " + JSON.stringify(req.body));
-  counter = {};
-  saveDb();
-  res.send("Cleared");
-});
+// app.post("/clear", (req, res) => {
+//   console.log("Recevied: " + JSON.stringify(req.body));
+//   counter = {};
+//   saveDb();
+//   res.send("Cleared");
+// });
 
 app.listen(port, () => {
   console.log(`Useful script statistic app listening on port ${port}`);
@@ -67,6 +98,6 @@ fetch("http://localhost:3000/count", {
   headers: {
     "Content-Type": "application/json",
   },
-  body: JSON.stringify({ script: "abc" }),
+  body: JSON.stringify({ script: "abc", version: "xyz" }),
 });
 */
