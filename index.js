@@ -11,8 +11,8 @@ const dbFile = "db.json";
 let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
 
 function getLogFilePath(date) {
-  const logDir = path.join(__dirname, "logs");
-  const fileName = date.toISOString().slice(0, 10) + ".log";
+  const logDir = path.join(__dirname, "my-logs");
+  const fileName = date.toISOString().slice(0, 10) + ".txt";
   let filePath = path.join(logDir, fileName);
   return filePath;
 }
