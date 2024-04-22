@@ -1,18 +1,42 @@
 "use strict";
 const fs = require("fs");
+const path = require("path");
 const express = require("express");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 const dbFile = "db.json";
-const logFile = "log.txt";
 
 let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
 
+function getLogFilePath(date) {
+  const logDir = path.join(__dirname, "logs");
+  const fileName = date.toISOString().slice(0, 10) + ".log";
+  let filePath = path.join(logDir, fileName);
+  return filePath;
+}
+
 function writeLog(text) {
-  fs.appendFileSync(logFile, text + "\n");
+  let filePath = getLogFilePath(new Date(now()));
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, "");
+  }
+  fs.appendFileSync(filePath, text + "\n");
   console.log(text);
+}
+
+function getLog(date) {
+  let filePath = getLogFilePath(date);
+  if (!fs.existsSync(filePath)) {
+    return "Log not found";
+  }
+  return fs
+    .readFileSync(filePath, "utf8")
+    .toString()
+    .split("\n")
+    .reverse()
+    .join("<br/>");
 }
 
 function saveDb() {
@@ -60,14 +84,18 @@ app.get("/json", async (req, res) => {
 });
 
 app.get("/log", async (req, res) => {
-  res.send(
-    fs.readFileSync(logFile).toString().split("\n").reverse().join("<br/>")
-  );
+  res.send(getLog(new Date(now())));
 });
 
-app.get("/clear-log", async (req, res) => {
-  fs.writeFileSync(logFile, "");
-  res.send("Cleared");
+app.get("/log/:date", async (req, res) => {
+  try {
+    const dateStr = req.params.date;
+    const [year, month, day] = dateStr.split("-");
+    const date = new Date(year, month - 1, day);
+    res.send(getLog(date));
+  } catch (error) {
+    res.send("ERROR: " + error.message);
+  }
 });
 
 app.post("/count", (req, res) => {
