@@ -100,7 +100,7 @@ app.get("/log/:date", async (req, res) => {
 
 app.post("/count", (req, res) => {
   console.log("Recevied: " + JSON.stringify(req.body));
-  const { script, version = "old" } = req.body || {};
+  const { script, version = "old", uid = "" } = req.body || {};
   if (script) {
     if (!counter[version]) {
       counter[version] = {};
@@ -110,7 +110,7 @@ app.post("/count", (req, res) => {
     }
     let newVal = counter[version][script] + 1;
     counter[version][script] = newVal;
-    let log = `${now()}: ${script} (${version}) -> ${newVal}`;
+    let log = `${now()}: ${script} (${version}-${uid}) -> ${newVal}`;
     writeLog(log);
     res.send(log);
     saveDb();
