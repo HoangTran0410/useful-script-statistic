@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 const dbFile = "db.json";
 
 let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
+let logTemp = "";
 
 function getLogFilePath(date) {
   const logDir = path.join(__dirname, "my-logs");
@@ -17,13 +18,27 @@ function getLogFilePath(date) {
   return filePath;
 }
 
-function writeLog(text) {
+function addLog(text) {
+  logTemp += text + "\n";
+}
+
+function saveLog(tried = 5) {
+  if (!logTemp) return;
   let filePath = getLogFilePath(new Date(now()));
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, "");
   }
-  fs.appendFileSync(filePath, text + "\n");
-  console.log(text);
+  fs.appendFile(filePath, logTemp, (err) => {
+    if (err) {
+      console.log("ERROR save log: ", err);
+      if (tried > 0) {
+        console.log("Retrying... " + tried);
+        saveLog(--tried);
+      }
+    }
+  });
+  console.log(logTemp);
+  logTemp = "";
 }
 
 function getLog(date) {
@@ -39,8 +54,16 @@ function getLog(date) {
     .join("<br/>");
 }
 
-function saveDb() {
-  fs.writeFileSync(dbFile, JSON.stringify(counter));
+function saveCounter(tried = 5) {
+  fs.writeFile(dbFile, JSON.stringify(counter), (err) => {
+    if (err) {
+      console.log("ERROR save counter ", err);
+      if (tried > 0) {
+        console.log("Retrying... " + tried);
+        saveCounter(--tried);
+      }
+    }
+  });
 }
 
 function sortObjectByValue(obj) {
@@ -111,24 +134,19 @@ app.post("/count", (req, res) => {
     let newVal = counter[version][script] + 1;
     counter[version][script] = newVal;
     let log = `${now()}: ${script} (${version}-${uid}) -> ${newVal}`;
-    writeLog(log);
+    addLog(log);
     res.send(log);
-    saveDb();
   } else {
     res.send("Not valid body");
   }
 });
 
-// app.post("/clear", (req, res) => {
-//   console.log("Recevied: " + JSON.stringify(req.body));
-//   counter = {};
-//   saveDb();
-//   res.send("Cleared");
-// });
-
 app.listen(port, () => {
   console.log(`Useful script statistic app listening on port ${port}`);
-  // setInterval(saveDb, 1000 * 60);
+  setInterval(() => {
+    saveCounter();
+    saveLog();
+  }, 1000 * 15);
 });
 
 /* Update data:
