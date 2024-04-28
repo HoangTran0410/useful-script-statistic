@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 const dbFile = "db.json";
 
 let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
+let counterSaved = false;
 let logTemp = "";
 
 function getLogFilePath(date) {
@@ -35,10 +36,11 @@ function saveLog(tried = 5) {
         console.log("Retrying... " + tried);
         saveLog(--tried);
       }
+    } else {
+      console.log(logTemp);
+      logTemp = "";
     }
   });
-  console.log(logTemp);
-  logTemp = "";
 }
 
 function getLog(date) {
@@ -55,6 +57,7 @@ function getLog(date) {
 }
 
 function saveCounter(tried = 5) {
+  if (counterSaved) return;
   fs.writeFile(dbFile, JSON.stringify(counter), (err) => {
     if (err) {
       console.log("ERROR save counter ", err);
@@ -62,6 +65,8 @@ function saveCounter(tried = 5) {
         console.log("Retrying... " + tried);
         saveCounter(--tried);
       }
+    } else {
+      counterSaved = true;
     }
   });
 }
@@ -133,6 +138,7 @@ app.post("/count", (req, res) => {
     }
     let newVal = counter[version][script] + 1;
     counter[version][script] = newVal;
+    counterSaved = false;
     let log = `${now()}: ${script} (${version}-${uid}) -> ${newVal}`;
     addLog(log);
     res.send(log);
