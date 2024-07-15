@@ -8,7 +8,14 @@ const port = process.env.PORT || 3000;
 
 const dbFile = "db.json";
 
-let counter = JSON.parse(fs.readFileSync(dbFile) || "{}");
+let counter = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(dbFile) || "{}");
+  } catch (e) {
+    console.log("ERROR", e);
+  }
+  return {};
+})();
 let counterSaved = false;
 let logTemp = "";
 
@@ -58,7 +65,17 @@ function getLog(date) {
 
 function saveCounter(tried = 5) {
   if (counterSaved) return;
-  fs.writeFile(dbFile, JSON.stringify(counter), (err) => {
+  let text;
+  try {
+    text = JSON.stringify(counter, null, 4);
+    let json = JSON.parse(text); // try to parse again
+  } catch (error) {
+    setTimeout(() => {
+      saveCounter(tried);
+    }, 2000);
+    return;
+  }
+  fs.writeFile(dbFile, text, (err) => {
     if (err) {
       console.log("ERROR save counter ", err);
       if (tried > 0) {
